@@ -10,17 +10,17 @@ import pyroki as pk                 # PyRoki: 机器人逆运动学库
 import viser                       # viser: 交互式3D可视化工具
 from robot_descriptions.loaders.yourdfpy import load_robot_description  # 加载URDF机器人模型
 from viser.extras import ViserUrdf # viser提供的URDF可视化工具
-
+import yourdfpy
 import pyroki_snippets as pks      # 你自己写的小工具，比如IK求解函数
 
 def main():
     """Main function for basic IK."""
-
-    # 加载 Panda 机械臂的URDF描述
-    urdf = load_robot_description("xArm7_description")
+    # 你也可以直接用 yourdfpy 加载URDF
+    urdf_path = "/home/cxm/.cache/robot_descriptions/robot-assets/urdfs/robots/xarm7/xarm7_robot.urdf"
+    urdf = yourdfpy.URDF.load(urdf_path)
 
     print("robot joint names:", urdf._link_map.keys())  # 观察所有link，方便选target link
-    target_link_name = "panda_hand"  # 目标末端执行器的名字
+    target_link_name = "link_eef"  # 目标末端执行器的名字
 
     # 用URDF创建一个PyRoki的机器人对象
     robot = pk.Robot.from_urdf(urdf)
@@ -41,6 +41,14 @@ def main():
     )
     # 一个显示“当前耗时”的界面元素
     timing_handle = server.gui.add_number("Elapsed (ms)", 0.001, disabled=True)
+    # 显示EE position
+    ee_pos_display = server.gui.add_text("EE Pose",
+                                          initial_value="(0.000, 0.000, 0.000)",
+                                          disabled=True)
+    # 显示EE orientation
+    ee_wxyz_display = server.gui.add_text("EE Orientation",
+                                           initial_value="(1.000, 0.000, 0.000, 0.000)",
+                                           disabled=True)
 
     while True:
         # 每次循环：求解当前目标位置的逆运动学
@@ -56,8 +64,22 @@ def main():
         elapsed_time = time.time() - start_time
         timing_handle.value = 0.99 * timing_handle.value + 0.01 * (elapsed_time * 1000)  # unit is ms
 
+        ee_pos_display.value = (
+            f"({ik_target.position[0]:.3f}, "
+            f"{ik_target.position[1]:.3f}, "
+            f"{ik_target.position[2]:.3f}, "
+        )
+        
+        ee_wxyz_display.value = (
+            f"({ik_target.wxyz[0]:.3f}, "
+            f"{ik_target.wxyz[1]:.3f}, "
+            f"{ik_target.wxyz[2]:.3f}, "
+            f"{ik_target.wxyz[3]:.3f})"
+        )
+
         # 更新可视化机器人状态
         urdf_vis.update_cfg(solution)
+
 
 if __name__ == "__main__":
     main()
