@@ -18,6 +18,7 @@ def main():
 
     # 加载 Panda 机械臂的URDF描述
     urdf = load_robot_description("panda_description")
+    print("robot joint names:", urdf._link_map.keys())  # 观察所有link，方便选target link
     target_link_name = "panda_hand"  # 目标末端执行器的名字
 
     # 用URDF创建一个PyRoki的机器人对象

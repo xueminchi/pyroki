@@ -11,7 +11,7 @@ import viser
 from pyroki.collision import HalfSpace, RobotCollision, Sphere
 from robot_descriptions.loaders.yourdfpy import load_robot_description
 from viser.extras import ViserUrdf
-
+    
 import pyroki_snippets as pks
 
 
@@ -22,6 +22,19 @@ def main():
     robot = pk.Robot.from_urdf(urdf)
 
     robot_coll = RobotCollision.from_urdf(urdf)
+
+# 📌 可视化每个 link 的胶囊体
+    capsule_list = robot_coll.coll.unstack()
+    for link_name, capsule in zip(robot_coll.link_names, capsule_list):
+        mesh = capsule.to_trimesh()
+        server.scene.add_mesh_trimesh(
+            f"/robot/collision_capsule/{link_name}",
+            mesh=mesh,
+            color=(1.0, 0.0, 0.0, 0.5)  # 半透明红色
+        )
+
+
+
     plane_coll = HalfSpace.from_point_and_normal(
         np.array([0.0, 0.0, 0.0]), np.array([0.0, 0.0, 1.0])
     )
