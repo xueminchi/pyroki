@@ -10,20 +10,15 @@ import pyroki as pk                 # PyRoki: 机器人逆运动学库
 import viser                       # viser: 交互式3D可视化工具
 from robot_descriptions.loaders.yourdfpy import load_robot_description  # 加载URDF机器人模型
 from viser.extras import ViserUrdf # viser提供的URDF可视化工具
-import yourdfpy  # yourdfpy: 用于加载URDF的库
+
 import pyroki_snippets as pks      # 你自己写的小工具，比如IK求解函数
 
 def main():
     """Main function for basic IK."""
 
     # 加载 Panda 机械臂的URDF描述
-    # urdf = load_robot_description("panda_description")
-    # print("robot joint names:", urdf._link_map.keys())  # 观察所有link，方便选target link
-    # target_link_name = "panda_hand"  # 目标末端执行器的名字
+    urdf = load_robot_description("xArm7_description")
 
-    # 你也可以直接用 yourdfpy 加载URDF
-    urdf_path = "/home/cxm/.cache/robot_descriptions/robot-assets/urdfs/robots/franka_panda/panda.urdf"
-    urdf = yourdfpy.URDF.load(urdf_path) 
     print("robot joint names:", urdf._link_map.keys())  # 观察所有link，方便选target link
     target_link_name = "panda_hand"  # 目标末端执行器的名字
 
