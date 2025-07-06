@@ -11,6 +11,7 @@ import viser
 from pyroki.collision import HalfSpace, RobotCollision, Sphere
 from robot_descriptions.loaders.yourdfpy import load_robot_description
 from viser.extras import ViserUrdf
+import jax.numpy as jnp
     
 import pyroki_snippets as pks
 
@@ -46,6 +47,13 @@ def main():
     )
     server.scene.add_mesh_trimesh("/obstacle/mesh", mesh=sphere_coll.to_trimesh())
 
+    # Add GUI controls for visualization options
+    show_urdf_handle = server.gui.add_checkbox("Show URDF Model", initial_value=True)
+    show_collision_spheres_handle = server.gui.add_checkbox("Show Collision Spheres", initial_value=False)
+    
+    # Create collision sphere visualization
+    collision_sphere_handle = None
+    
     timing_handle = server.gui.add_number("Elapsed (ms)", 0.001, disabled=True)
 
     while True:
@@ -69,8 +77,43 @@ def main():
         # Update timing handle.
         timing_handle.value = (time.time() - start_time) * 1000
 
-        # Update visualizer.
-        urdf_vis.update_cfg(solution)
+        # Update URDF visualization based on checkbox
+        if show_urdf_handle.value:
+            urdf_vis.update_cfg(solution)
+        else:
+            # Hide URDF by setting to a far away position
+            urdf_vis.update_cfg(solution * 0)  # This will hide the robot
+            
+        # Update collision sphere visualization
+        if show_collision_spheres_handle.value:
+            try:
+                # Get collision geometry at current configuration
+                collision_geom = robot_coll.at_config(robot, jnp.array(solution))
+                
+                # Convert to trimesh for visualization
+                collision_mesh = collision_geom.to_trimesh()
+                
+                # Create or update collision sphere visualization
+                if collision_sphere_handle is None:
+                    collision_sphere_handle = server.scene.add_mesh_simple(
+                        "/collision_spheres", 
+                        vertices=collision_mesh.vertices,
+                        faces=collision_mesh.faces,
+                        color=(255, 0, 0),  # 红色
+                        wireframe=True,
+                        opacity=0.5  # 半透明
+                    )
+                else:
+                    # Update existing mesh
+                    collision_sphere_handle.vertices = collision_mesh.vertices
+                    collision_sphere_handle.faces = collision_mesh.faces
+            except Exception as e:
+                print(f"Error updating collision spheres: {e}")
+        else:
+            # Remove collision sphere visualization if it exists
+            if collision_sphere_handle is not None:
+                collision_sphere_handle.remove()
+                collision_sphere_handle = None
 
 
 if __name__ == "__main__":
